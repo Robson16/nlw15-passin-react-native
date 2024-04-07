@@ -1,18 +1,41 @@
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
+import { api } from '@/server/api'
+import { useBadgeStore } from '@/store/badge-store'
 import { colors } from '@/styles/colors'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { Link } from 'expo-router'
+import { Link, Redirect } from 'expo-router'
 import { useState } from 'react'
 import { Alert, Image, StatusBar, View } from 'react-native'
 
 export default function Home() {
   const [code, setCode] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  function handleAccessCredential() {
-    if (!code.trim()) {
-      return Alert.alert('Ingresso', 'Informe o codigo do ingresso')
+  const badgeStore = useBadgeStore()
+
+  async function handleAccessCredential() {
+    try {
+      if (!code.trim()) {
+        return Alert.alert('Ingresso', 'Informe o codigo do ingresso')
+      }
+
+      setIsLoading(true)
+
+      const response = await api.get(`/attendees/${code}/badge`)
+
+      const badge = response.data.badge
+
+      badgeStore.save(badge)
+    } catch (error) {
+      console.log(error)
+      setIsLoading(false)
+      Alert.alert('Credencial', 'Credencial não encontrada!')
     }
+  }
+
+  if (badgeStore.data?.checkInURL) {
+    return <Redirect href="/ticket" />
   }
 
   return (
@@ -33,7 +56,11 @@ export default function Home() {
           />
           <Input.Field placeholder="Digite aqui..." onChangeText={setCode} />
         </Input>
-        <Button text="Acessar credencial" onPress={handleAccessCredential} />
+        <Button
+          text="Acessar credencial"
+          isLoading={isLoading}
+          onPress={handleAccessCredential}
+        />
         <Link
           href="/register"
           className="text-gray-100 text-base font-bold text-center mt-8"

@@ -1,8 +1,8 @@
 import {
   ActivityIndicator,
-  Text,
   Pressable,
   PressableProps,
+  Text,
 } from 'react-native'
 
 interface ButtonProps extends PressableProps {
